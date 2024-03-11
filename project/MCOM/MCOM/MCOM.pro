@@ -13,14 +13,17 @@ CONFIG += c++17
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
+    pidwindow.cpp \
     serialwindow.cpp
 
 HEADERS += \
     mainwindow.h \
+    pidwindow.h \
     serialwindow.h
 
 FORMS += \
     mainwindow.ui \
+    pidwindow.ui \
     serialwindow.ui
 
 # Default rules for deployment.

@@ -21,6 +21,23 @@ public:
 private slots:
     void on_pushButton_clicked();
 
+    void on_enter_bt_clicked();
+
+    void on_mc_startBt_clicked();
+
+    void on_mt_stopBt_clicked();
+
+    void sendKpCommand();
+
+    void sendKiCommand();
+
+    void sendKcCommand();
+
+    void sendIdCommand();
+
+    void sendIqCommand();
+
+    void onReadSerialData();
 private:
     Ui::serialwindow *ui;
     QSerialPort *serial;

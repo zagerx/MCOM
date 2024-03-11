@@ -17,8 +17,8 @@
    <widget class="QPushButton" name="serialButton">
     <property name="geometry">
      <rect>
-      <x>180</x>
-      <y>160</y>
+      <x>80</x>
+      <y>50</y>
       <width>101</width>
       <height>51</height>
      </rect>
@@ -27,17 +27,30 @@
      <string>串口通信</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_2">
+   <widget class="QPushButton" name="CANButton">
     <property name="geometry">
      <rect>
-      <x>340</x>
-      <y>160</y>
+      <x>210</x>
+      <y>50</y>
       <width>111</width>
       <height>51</height>
      </rect>
     </property>
     <property name="text">
      <string>CAN通信</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="PIDButton">
+    <property name="geometry">
+     <rect>
+      <x>80</x>
+      <y>150</y>
+      <width>101</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>PID</string>
     </property>
    </widget>
   </widget>
@@ -47,7 +60,7 @@
      <x>0</x>
      <y>0</y>
      <width>800</width>
-     <height>21</height>
+     <height>17</height>
     </rect>
    </property>
   </widget>
