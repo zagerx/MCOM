@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QtSerialPort/QSerialPort>
 #include <QtSerialPort/QSerialPortInfo>
+#include <QLabel>
 
 namespace Ui {
 class serialwindow;
@@ -38,10 +39,18 @@ private slots:
     void sendIqCommand();
 
     void onReadSerialData();
+
+    void on_mc_pidset_clicked();
+
+    void sendParamEnter();
+
+    void on_mc_speed_Bt_clicked();
+
+    void processdata(QByteArray data);
 private:
     Ui::serialwindow *ui;
     QSerialPort *serial;
-
+    // QLabel *lightLabel;
 };
 
 #endif // SERIALWINDOW_H
