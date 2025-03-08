@@ -1,6 +1,7 @@
 #include "SerialManager.h"
 #include <QDebug>
 #include <QSerialPortInfo>
+#include <QThread>
 
 SerialManager::SerialManager(QObject *parent) : QObject(parent) {
     _Serial = new QSerialPort(this);
@@ -41,13 +42,15 @@ bool SerialManager::isOpen() const {
 }
 
 void SerialManager::writeData(const QByteArray &data) {
+    QMutexLocker locker(&m_writeMutex);
     if (_Serial->isOpen()) {
         if (_Serial->write(data) == -1) {
-            logError("Failed to write data: " + _Serial->errorString());
-            emit errorOccurred(_Serial->errorString());
+            // 添加写失败重试逻辑
+            for (int i = 0; i < 3; ++i) {
+                if (_Serial->write(data) != -1) break;
+                QThread::msleep(10);
+            }
         }
-    } else {
-        logError("Port is not open, cannot write data.");
     }
 }
 

@@ -2,16 +2,17 @@
 #include "ui_mainwindow.h"
 #include <QtDebug>
 #include "Threads/RecvThread.h"
-
+#include "Threads/SendThread.h"
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
     
     // 初始化模块
     SerialDev = new SerialManager(this);
     mRecvThread = new RecvThread(this); // 初始化接收线程
+    mSendThread = new SendThread(this); 
     mDataProThread = new DataProcessorThread(mRecvThread, this); // 初始化数据处理线程
 
-    connect(SerialDev,&SerialManager::dataReceived,this,&MainWindow::handleDataReceived);
+    connect(SerialDev,&SerialManager::dataReceived,mRecvThread, &RecvThread::processData);
     // 连接按钮点击事件
     connect(ui->OpBt, &QPushButton::clicked,this, &MainWindow::onConnectButtonClicked);
     // 连接 verticalLayout 中的单选按钮
@@ -21,16 +22,19 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     // 连接 verticalLayout_3 中的单选按钮
     ui->checkBox->setChecked(true); // 设置为选中状态
     connectVLayout(ui->verticalLayout_3);
-    // 连接 MainWindow 的信号到 RecvThread 的槽函数
-    connect(this, &MainWindow::dataToProcess, mRecvThread, &RecvThread::processData);
+
     //连接
     connect(mDataProThread, &DataProcessorThread::heart_sigle,this, &MainWindow::toggle_led);
-
+    connect(this, &MainWindow::UIdataReadysig,mDataProThread, &DataProcessorThread::getUIData);
+    connect(mDataProThread, &DataProcessorThread::ui_dataReady_sigle,mSendThread, &SendThread::sendData);
+    connect(mSendThread, &SendThread::dataReadyToSend,SerialDev,&SerialManager::writeData);
+    connect(mRecvThread, &RecvThread::rawDataReceived,mDataProThread, &DataProcessorThread::handleRawData);
     // 初始化时更新可用串口号
     updateAvailablePorts();
     // 启动接收线程
-    mRecvThread->start();  
-    mDataProThread->start();    
+    mRecvThread->start();
+    mDataProThread->start();
+    mSendThread->start();
 }
 
 MainWindow::~MainWindow() {
@@ -40,9 +44,7 @@ MainWindow::~MainWindow() {
     mDataProThread->wait(); // 等待线程结束        
     delete ui;
 }
-void MainWindow::handleDataReceived(const QByteArray &data) {
-    emit dataToProcess(data);
-}
+
 void MainWindow::updateAvailablePorts() {
     // 清空comboBox_2
     ui->comboBox_2->clear();
@@ -95,10 +97,11 @@ void MainWindow::onRadioButtonToggled(bool checked) {
             QVBoxLayout *layout = qobject_cast<QVBoxLayout*>(radioButton->parentWidget()->layout());
             if (layout) {
                 if (layout == ui->verticalLayout) {
-                    qDebug() << "verticalLayout 中的按钮被选中:" << radioButton->text();
-                    // 构建要发送的数据
+                    const QByteArray data;
+                    emit UIdataReadysig(radioButton->text(),data);
                 } else if (layout == ui->verticalLayout_2) {
-                    qDebug() << "verticalLayout_2 中的按钮被选中:" << radioButton->text();
+                    const QByteArray data;
+                    emit UIdataReadysig(radioButton->text(),data);
                 }
             }
         }

@@ -7,6 +7,7 @@
 #include "HardwareManager/SerialManager.h"
 #include "Threads/RecvThread.h"
 #include "Threads/DataProcessorThread.h"
+#include "Threads/SendThread.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -19,11 +20,10 @@ public:
     ~MainWindow();
 
 signals:
-    void dataToProcess(const QByteArray &data);
+    void UIdataReadysig(const QString name, const QByteArray &data);
 private slots:
     void onConnectButtonClicked();
     void onRadioButtonToggled(bool checked); // 单选按钮回调函数
-    void handleDataReceived(const QByteArray &data); // 处理接收到的数据
     void toggle_led(void);
 private:
     void updateAvailablePorts(); // 更新可用串口号
@@ -32,6 +32,7 @@ private:
     SerialManager *SerialDev;
     RecvThread *mRecvThread; // 新增接收线程
     DataProcessorThread *mDataProThread; // 数据处理线程
+    SendThread *mSendThread; // 新增接收线程
 };
 
 #endif // MAINWINDOW_H

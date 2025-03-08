@@ -10,11 +10,11 @@ class ProtocolHandler : public QObject {
 public:
     // 命令枚举
     enum Command {
-        CMD_SET_SPEED = 0x0101,    // 设置速度
+        CMD_SET_SPEED = 0x0101,     // 设置速度
         CMD_DISABLE_MOTOR = 0x0103, // 电机失能
-        CMD_NORMAL_MODE = 0x0105,  // 电机正常模式
-        CMD_DEBUG_MODE = 0x0106,   // 电机调试模式
-        CMD_HEARTBEAT = 0x0200     // 心跳
+        CMD_NORMAL_MODE = 0x0105,   // 电机正常模式
+        CMD_SPEED_MODE = 0x0106,    // 电机调试模式
+        CMD_HEARTBEAT = 0x0200      // 心跳
     };
     using byte = unsigned char;  // 增加类型别名提高可读性
     explicit ProtocolHandler(QObject *parent = nullptr);

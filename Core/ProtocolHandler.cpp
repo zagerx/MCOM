@@ -12,8 +12,8 @@ QByteArray ProtocolHandler::buildFrame(Command cmd, const QByteArray &data) {
     frame.append(0xA5);
 
     // 命令 (little-endian)
-    frame.append(static_cast<char>(cmd & 0xFF));
-    frame.append(static_cast<char>((cmd >> 8) & 0xFF));
+    frame.append(static_cast<char>(cmd>>8 & 0xFF));
+    frame.append(static_cast<char>((cmd) & 0xFF));
 
     // 数据长度 (little-endian)
     quint16 dataLen = data.size();

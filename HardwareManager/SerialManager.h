@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QSerialPort>
 #include <QStringList>
+#include <QMutex>
 
 class SerialManager : public QObject {
     Q_OBJECT
@@ -31,7 +32,7 @@ private slots:
 private:
     void configureSerialPort(); // 配置串口参数
     void logError(const QString &errorMessage); // 记录错误信息
-
+    QMutex m_writeMutex; 
     QSerialPort *_Serial;
 };
 

@@ -1,14 +1,28 @@
 #include "SendThread.h"
-#include <QThread>
+#include <QDebug>
 
-SendThread::SendThread(SerialManager *serial, ProtocolHandler *protocol, QObject *parent)
-    : QThread(parent), SerialDev(serial), m_protocol(protocol) {}
+SendThread::SendThread(QObject *parent)
+    : QThread(parent) {
+    // 构造函数
+}
 
 void SendThread::run() {
+    // 线程的主循环
     while (!isInterruptionRequested()) {
-        // 示例：周期性发送心跳包
-        QByteArray frame = m_protocol->buildFrame(ProtocolHandler::CMD_HEARTBEAT, QByteArray());
-        SerialDev->writeData(frame);
-        QThread::msleep(1000); // 1秒发送一次
+        QMutexLocker locker(&m_mutex);
+        if (!SendBuffer.isEmpty()) {
+            QByteArray data = SendBuffer.dequeue();
+            locker.unlock();  // 提前释放锁
+            emit dataReadyToSend(data);  // 发出实际发送信号
+            qDebug() << "Data sent from SendThread:" << data.toHex();
+        } else {
+            QThread::msleep(1);  // 避免CPU空转
+        }
     }
+}
+
+void SendThread::sendData(const QByteArray &data) {
+    // 将数据加入发送队列
+    QMutexLocker locker(&m_mutex);
+    SendBuffer.enqueue(data);
 }
