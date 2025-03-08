@@ -15,11 +15,16 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     // 连接按钮点击事件
     connect(ui->OpBt, &QPushButton::clicked,this, &MainWindow::onConnectButtonClicked);
     // 连接 verticalLayout 中的单选按钮
-    connectRadioButtons(ui->verticalLayout);
+    connectVLayout(ui->verticalLayout);
     // 连接 verticalLayout_2 中的单选按钮
-    connectRadioButtons(ui->verticalLayout_2);
+    connectVLayout(ui->verticalLayout_2);
+    // 连接 verticalLayout_3 中的单选按钮
+    ui->checkBox->setChecked(true); // 设置为选中状态
+    connectVLayout(ui->verticalLayout_3);
     // 连接 MainWindow 的信号到 RecvThread 的槽函数
     connect(this, &MainWindow::dataToProcess, mRecvThread, &RecvThread::processData);
+    //连接
+    connect(mDataProThread, &DataProcessorThread::heart_sigle,this, &MainWindow::toggle_led);
 
     // 初始化时更新可用串口号
     updateAvailablePorts();
@@ -97,14 +102,23 @@ void MainWindow::onRadioButtonToggled(bool checked) {
                 }
             }
         }
-    }    
+    }
 }
-void MainWindow::connectRadioButtons(QVBoxLayout *layout) {
-    // 遍历布局中的所有单选按钮，并连接信号槽
+// 修改 connectVLayout 函数
+void MainWindow::connectVLayout(QVBoxLayout *layout) {
     for (int i = 0; i < layout->count(); ++i) {
         QWidget *widget = layout->itemAt(i)->widget();
-        if (QRadioButton *radioButton = qobject_cast<QRadioButton*>(widget)) {
-            connect(radioButton, &QRadioButton::toggled, this, &MainWindow::onRadioButtonToggled);
+        // 同时连接单选按钮和复选框
+        if (auto radio = qobject_cast<QRadioButton*>(widget)) {
+            connect(radio, &QRadioButton::toggled, this, &MainWindow::onRadioButtonToggled);
+        } else if (auto check = qobject_cast<QCheckBox*>(widget)) 
+        {
+            connect(check, &QCheckBox::stateChanged, this, [=](int state){
+                QVBoxLayout *layout = ui->verticalLayout_3;
+                qDebug() << "verticalLayout_3 中的控件被选中:" << check->text() << "状态:" << state;
+            });
         }
     }
+}void MainWindow::toggle_led() {
+    qDebug()<<"main hear";
 }

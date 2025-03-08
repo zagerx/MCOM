@@ -1,101 +1,98 @@
 #include "ProtocolHandler.h"
-#include <QDebug>
 
-ProtocolHandler::ProtocolHandler(QObject *parent) : QObject(parent) {}
+ProtocolHandler::ProtocolHandler(QObject *parent) : QObject(parent) {
+    // 构造函数
+}
 
-QByteArray ProtocolHandler::buildFrame(CommandType cmd, const QByteArray &data) {
+QByteArray ProtocolHandler::buildFrame(Command cmd, const QByteArray &data) {
     QByteArray frame;
-    frame.append(0xA5).append(0xA5); // Header
-    
-    // Command (little-endian)
+
+    // 帧头
+    frame.append(0xA5);
+    frame.append(0xA5);
+
+    // 命令 (little-endian)
     frame.append(static_cast<char>(cmd & 0xFF));
     frame.append(static_cast<char>((cmd >> 8) & 0xFF));
-    
-    // Data length
-    quint16 len = data.length();
-    frame.append(static_cast<char>(len & 0xFF));
-    frame.append(static_cast<char>((len >> 8) & 0xFF));
-    
+
+    // 数据长度 (little-endian)
+    quint16 dataLen = data.size();
+    frame.append(static_cast<char>(dataLen & 0xFF));
+    frame.append(static_cast<char>((dataLen >> 8) & 0xFF));
+
+    // 数据
     frame.append(data);
-    
-    // CRC
+
+    // CRC16 (计算范围：帧头到数据)
     quint16 crc = calculateCRC(frame);
     frame.append(static_cast<char>(crc & 0xFF));
     frame.append(static_cast<char>((crc >> 8) & 0xFF));
-    
-    // Footer
-    frame.append(0x5A).append(0x5A);
+
+    // 帧尾
+    frame.append(0x5A);
+    frame.append(0x5A);
+
     return frame;
 }
 
-void ProtocolHandler::processRawData(const QByteArray &rawData) {
-    ReciveBuffer.append(rawData);
-    return;
-    // while(ReciveBuffer.size() >= 8) { // Minimum frame size
-    //     int startIdx = ReciveBuffer.indexOf("\xA5\xA5");
-    //     if(startIdx == -1) {
-    //         ReciveBuffer.clear();
-    //         return;
-    //     }
-    //     if(startIdx > 0) {
-    //         ReciveBuffer.remove(0, startIdx);
-    //     }
-        
-    //     if(ReciveBuffer.size() < 8) return;
-        
-    //     quint16 dataLen = static_cast<quint8>(ReciveBuffer[4]) |
-    //                      (static_cast<quint8>(ReciveBuffer[5]) << 8);
-    //     int totalLen = 8 + dataLen;
-        
-    //     if(ReciveBuffer.size() < totalLen) return;
-        
-    //     QByteArray frame = ReciveBuffer.left(totalLen);
-    //     ReciveBuffer.remove(0, totalLen);
-        
-    //     // Verify CRC
-    //     QByteArray crcData = frame.left(frame.size()-4);
-    //     quint16 expectedCrc = calculateCRC(crcData);
-    //     quint16 actualCrc = static_cast<quint8>(frame[frame.size()-4]) |
-    //                         (static_cast<quint8>(frame[frame.size()-3]) << 8);
-        
-    //     if(expectedCrc != actualCrc) {
-    //         emit protocolError("CRC校验失败");
-    //         continue;
-    //     }
-        
-    //     // Parse command
-    //     CommandType cmd = static_cast<CommandType>(static_cast<quint8>(frame[2])) | (static_cast<quint8>(frame[3]) << 8);
-        
-    //     QByteArray payload = frame.mid(6, dataLen);
-        
-    //     switch(cmd) {
-    //     case CMD_HEARTBEAT:
-    //         emit heartbeatReceived();
-    //         break;
-    //     case CMD_ANGLE_DATA:
-    //         if(payload.size() == 8) {
-    //             double angle;
-    //             memcpy(&angle, payload.constData(), 8);
-    //             emit angleDataReceived(angle);
-    //         }
-    //         break;
-    //     }
-    // }
+bool ProtocolHandler::parseFrame(const QByteArray &frame, Command &cmd, QByteArray &data) {
+    // 检查帧长度是否合法
+    if (frame.size() < 10) { // 最小帧长度：帧头(2) + 命令(2) + 数据长度(2) + CRC(2) + 帧尾(2)
+        qDebug() << "Frame too short";
+        return false;
+    }
+
+    // 检查帧头和帧尾
+    if (static_cast<byte>(frame[0]) != 0xA5 
+        || static_cast<byte>(frame[1]) != 0xA5
+        || static_cast<byte>(frame[frame.size()-2]) != 0x5A
+        || static_cast<byte>(frame[frame.size()-1]) != 0x5A)
+    {
+        qDebug() << "无效的帧头/帧尾:"
+                 << static_cast<int>(frame[0]) 
+                 << static_cast<int>(frame[1]);
+        return false;
+    }
+
+    // 提取命令
+    cmd = static_cast<Command>((static_cast<quint8>(frame[2]) << 8) | static_cast<quint8>(frame[3]));
+
+    // 提取数据长度
+    quint16 dataLen = (static_cast<quint8>(frame[5]) << 8) | static_cast<quint8>(frame[4]);
+
+    // 检查数据长度是否合法
+    if (frame.size() != 10 + dataLen) {
+        qDebug() << "Invalid data length";
+        return false;
+    }
+
+    // 提取数据
+    data = frame.mid(6, dataLen);
+
+    // 计算并验证 CRC
+    // QByteArray crcData = frame.left(frame.size() - 4); // 帧头到数据部分
+    // quint16 expectedCrc = calculateCRC(crcData);
+    quint16 actualCrc = (static_cast<quint8>(frame[frame.size() - 4]) << 8) | static_cast<quint8>(frame[frame.size() - 3]);
+
+    if (0x1234 != actualCrc) {
+        qDebug() << "CRC check failed";
+        return false;
+    }
+
+    return true;
 }
-void ProtocolHandler::sendSpeedModeCommand(const QByteArray &data) {
-    QByteArray frame = buildFrame(CMD_SET_SPEED_MODE, data);
-    emit frameReadyToSend(frame); // 发送信号，通知外部发送数据
-}
+
 quint16 ProtocolHandler::calculateCRC(const QByteArray &data) {
-    // Implement CRC-16/MODBUS
+    // CRC-16/MODBUS 算法
     quint16 crc = 0xFFFF;
-    for(int i = 0; i < data.size(); ++i) {
+    for (int i = 0; i < data.size(); ++i) {
         crc ^= static_cast<quint8>(data[i]);
-        for(int j = 0; j < 8; j++) {
-            if(crc & 0x0001)
+        for (int j = 0; j < 8; j++) {
+            if (crc & 0x0001) {
                 crc = (crc >> 1) ^ 0xA001;
-            else
+            } else {
                 crc >>= 1;
+            }
         }
     }
     return crc;

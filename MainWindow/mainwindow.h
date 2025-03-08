@@ -24,9 +24,10 @@ private slots:
     void onConnectButtonClicked();
     void onRadioButtonToggled(bool checked); // 单选按钮回调函数
     void handleDataReceived(const QByteArray &data); // 处理接收到的数据
+    void toggle_led(void);
 private:
     void updateAvailablePorts(); // 更新可用串口号
-    void connectRadioButtons(QVBoxLayout *layout);
+    void connectVLayout(QVBoxLayout *layout);
     Ui::MainWindow *ui;
     SerialManager *SerialDev;
     RecvThread *mRecvThread; // 新增接收线程

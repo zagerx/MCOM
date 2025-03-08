@@ -20,8 +20,8 @@ add_subdirectory(qcustomplot)
 set(CORE_SOURCES
     HardwareManager/SerialManager.cpp
     HardwareManager/SerialManager.h
-    #Core/ProtocolHandler.cpp
-    #Core/ProtocolHandler.h
+    Core/ProtocolHandler.cpp
+    Core/ProtocolHandler.h
 )
 
 set(THREADS_SOURCES
