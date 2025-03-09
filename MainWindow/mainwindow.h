@@ -5,9 +5,8 @@
 #include <QWidget>
 #include <QVBoxLayout>
 #include "HardwareManager/SerialManager.h"
-#include "Threads/RecvThread.h"
 #include "Threads/DataProcessorThread.h"
-#include "Threads/SendThread.h"
+#include "Threads/IOThread.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -30,9 +29,8 @@ private:
     void connectVLayout(QVBoxLayout *layout);
     Ui::MainWindow *ui;
     SerialManager *SerialDev;
-    RecvThread *mRecvThread; // 新增接收线程
     DataProcessorThread *mDataProThread; // 数据处理线程
-    SendThread *mSendThread; // 新增接收线程
+    IOThread *mSendThread; // 新增接收线程
 };
 
 #endif // MAINWINDOW_H

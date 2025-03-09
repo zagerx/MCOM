@@ -1,18 +1,24 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QtDebug>
-#include "Threads/RecvThread.h"
-#include "Threads/SendThread.h"
+#include "Threads/IOThread.h"
+#include "Threads/DataProcessorThread.h"
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
     
     // 初始化模块
     SerialDev = new SerialManager(this);
-    mRecvThread = new RecvThread(this); // 初始化接收线程
-    mSendThread = new SendThread(this); 
-    mDataProThread = new DataProcessorThread(mRecvThread, this); // 初始化数据处理线程
+    mSendThread = new IOThread(this); 
+    mDataProThread = new DataProcessorThread(this); // 初始化数据处理线程
+    //接收数据流  串口-->IOThead-->DPThread-->UI
+    connect(SerialDev,&SerialManager::dataReceived,mSendThread, &IOThread::RecivRawData);
+    connect(mSendThread, &IOThread::dataReadyToReci,mDataProThread, &DataProcessorThread::handleRawData);
+    connect(mDataProThread, &DataProcessorThread::heart_sigle,this, &MainWindow::toggle_led);
+    //发送数据流  UI-->DPThread-->IOThead-->串口
+    connect(this, &MainWindow::UIdataReadysig,mDataProThread, &DataProcessorThread::getUIData);
+    connect(mDataProThread, &DataProcessorThread::ui_dataReady_sigle,mSendThread, &IOThread::sendData);
+    connect(mSendThread, &IOThread::dataReadyToSend,SerialDev,&SerialManager::writeData);
 
-    connect(SerialDev,&SerialManager::dataReceived,mRecvThread, &RecvThread::processData);
     // 连接按钮点击事件
     connect(ui->OpBt, &QPushButton::clicked,this, &MainWindow::onConnectButtonClicked);
     // 连接 verticalLayout 中的单选按钮
@@ -23,23 +29,14 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     ui->checkBox->setChecked(true); // 设置为选中状态
     connectVLayout(ui->verticalLayout_3);
 
-    //连接
-    connect(mDataProThread, &DataProcessorThread::heart_sigle,this, &MainWindow::toggle_led);
-    connect(this, &MainWindow::UIdataReadysig,mDataProThread, &DataProcessorThread::getUIData);
-    connect(mDataProThread, &DataProcessorThread::ui_dataReady_sigle,mSendThread, &SendThread::sendData);
-    connect(mSendThread, &SendThread::dataReadyToSend,SerialDev,&SerialManager::writeData);
-    connect(mRecvThread, &RecvThread::rawDataReceived,mDataProThread, &DataProcessorThread::handleRawData);
     // 初始化时更新可用串口号
     updateAvailablePorts();
     // 启动接收线程
-    mRecvThread->start();
     mDataProThread->start();
     mSendThread->start();
 }
 
 MainWindow::~MainWindow() {
-    mRecvThread->requestInterruption(); // 请求中断线程
-    mRecvThread->wait(); // 等待线程结束 
     mDataProThread->requestInterruption(); // 请求中断线程
     mDataProThread->wait(); // 等待线程结束        
     delete ui;

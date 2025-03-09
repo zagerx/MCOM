@@ -25,10 +25,8 @@ set(CORE_SOURCES
 )
 
 set(THREADS_SOURCES
-    Threads/SendThread.cpp
-    Threads/SendThread.h
-    Threads/RecvThread.cpp
-    Threads/RecvThread.h
+    Threads/IOThread.cpp
+    Threads/IOThread.h
     Threads/DataProcessorThread.cpp
     Threads/DataProcessorThread.h
 )

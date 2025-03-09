@@ -7,17 +7,17 @@
 #include <QMutex>
 #include <QQueue>
 
-class SendThread : public QThread {
+class IOThread : public QThread {
     Q_OBJECT
 public:
-    explicit SendThread(QObject *parent = nullptr);
+    explicit IOThread(QObject *parent = nullptr);
     
 public slots:
     void sendData(const QByteArray &data);  // 接收发送数据的槽函数
-
+    void RecivRawData(const QByteArray &data);
 signals:
     void dataReadyToSend(const QByteArray &data);  // 数据准备好发送的信号
-
+    void dataReadyToReci(const QByteArray &data);
 protected:
     void run() override;
 

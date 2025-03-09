@@ -1,12 +1,12 @@
-#include "SendThread.h"
+#include "IOThread.h"
 #include <QDebug>
 
-SendThread::SendThread(QObject *parent)
+IOThread::IOThread(QObject *parent)
     : QThread(parent) {
     // 构造函数
 }
 
-void SendThread::run() {
+void IOThread::run() {
     // 线程的主循环
     while (!isInterruptionRequested()) {
         QMutexLocker locker(&m_mutex);
@@ -14,15 +14,18 @@ void SendThread::run() {
             QByteArray data = SendBuffer.dequeue();
             locker.unlock();  // 提前释放锁
             emit dataReadyToSend(data);  // 发出实际发送信号
-            qDebug() << "Data sent from SendThread:" << data.toHex();
+            qDebug() << "Data sent from IOThread:" << data.toHex();
         } else {
-            QThread::msleep(1);  // 避免CPU空转
+            QThread::msleep(2);  // 避免CPU空转
         }
     }
 }
 
-void SendThread::sendData(const QByteArray &data) {
+void IOThread::sendData(const QByteArray &data) {
     // 将数据加入发送队列
     QMutexLocker locker(&m_mutex);
     SendBuffer.enqueue(data);
+}
+void IOThread::RecivRawData(const QByteArray &data) {
+    emit dataReadyToReci(data);
 }

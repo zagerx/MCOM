@@ -1,8 +1,9 @@
 #include "DataProcessorThread.h"
 #include <QDebug>
 
-DataProcessorThread::DataProcessorThread(RecvThread *recvThread, QObject *parent)
-    : QThread(parent), data_soure(recvThread) {
+DataProcessorThread::DataProcessorThread( QObject *parent)
+    : QThread(parent)
+{
     // 构造函数
 }
 
