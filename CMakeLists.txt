@@ -14,7 +14,7 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets SerialPort)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets SerialPort)
 
 # 添加QCustomPlot库（需确保qcustomplot目录存在）
-add_subdirectory(qcustomplot)
+# add_subdirectory(qcustomplot)
 
 # 按模块组织源文件
 set(CORE_SOURCES

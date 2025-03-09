@@ -119,6 +119,7 @@ void MainWindow::connectVLayout(QVBoxLayout *layout) {
             });
         }
     }
-}void MainWindow::toggle_led() {
+}
+void MainWindow::toggle_led() {
     qDebug()<<"main hear";
 }

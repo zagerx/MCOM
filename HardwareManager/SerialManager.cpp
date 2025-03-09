@@ -43,17 +43,34 @@ bool SerialManager::isOpen() const {
 
 void SerialManager::writeData(const QByteArray &data) {
     QMutexLocker locker(&m_writeMutex);
-    if (_Serial->isOpen()) {
-        if (_Serial->write(data) == -1) {
-            // 添加写失败重试逻辑
-            for (int i = 0; i < 3; ++i) {
-                if (_Serial->write(data) != -1) break;
-                QThread::msleep(10);
-            }
+    if (!_Serial->isOpen()) return;
+
+    int retries = 3;
+    qint64 totalWritten = 0;
+    
+    while (retries-- > 0 && totalWritten < data.size()) {
+        qint64 written = _Serial->write(data.constData() + totalWritten, 
+                                      data.size() - totalWritten);
+        if (written == -1) {
+            logError("写入失败: " + _Serial->errorString());
+            continue;
+        }
+        
+        if (!_Serial->waitForBytesWritten(1000)) {
+            logError("等待写入超时");
+            continue;
+        }
+        
+        totalWritten += written;
+        if (totalWritten < data.size()) {
+            qDebug() << "部分写入，已写:" << totalWritten << "/" << data.size();
         }
     }
+    
+    if (totalWritten != data.size()) {
+        emit errorOccurred("数据发送不完整");
+    }
 }
-
 void SerialManager::handleReadyRead() {
     QByteArray data = _Serial->readAll();
     emit dataReceived(data); // 发送数据接收信号

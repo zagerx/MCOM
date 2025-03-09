@@ -14,6 +14,7 @@ class DataProcessorThread : public QThread {
     Q_OBJECT
 public:
     explicit DataProcessorThread(QObject *parent = nullptr);
+    ~DataProcessorThread();
 public slots:
     void getUIData(const QString name,const QByteArray &data);
     void handleRawData(const QByteArray &data);
@@ -23,10 +24,10 @@ signals:
     void heart_sigle(void);
     void ui_dataReady_sigle(const QByteArray &data);
 private:
-    ProtocolHandler protocolHandler;  // Instance of ProtocolHandler
-    QWaitCondition *m_waitCondition = new QWaitCondition();   
-    QMutex m_mutex; // 互斥锁，用于保护缓冲区
+    QMutex m_mutex;
+    QWaitCondition* m_waitCondition;
     QQueue<QByteArray> proBuffer;
+    ProtocolHandler protocolHandler;
 };
 
 #endif // DATAPROCESSORTHREAD_H

@@ -5,6 +5,12 @@ DataProcessorThread::DataProcessorThread( QObject *parent)
     : QThread(parent)
 {
     // 构造函数
+    m_waitCondition = new QWaitCondition();
+}
+DataProcessorThread::~DataProcessorThread()
+{
+    // 构造函数
+    delete m_waitCondition;
 }
 
 void  DataProcessorThread::getUIData(const QString name, const QByteArray &data)
@@ -32,24 +38,31 @@ void DataProcessorThread::handleRawData(const QByteArray &data) {
 }
 void DataProcessorThread::run() {
     QMutexLocker locker(&m_mutex);
+    QQueue<QByteArray> localBuffer;
+    
     while (!isInterruptionRequested()) {
-        // 等待直到有数据或中断请求
-        while (proBuffer.isEmpty() && !isInterruptionRequested()) {
-            m_waitCondition->wait(&m_mutex, 50); // 带超时的等待
-        }
-
-        // 处理所有待处理数据
-        while (!proBuffer.isEmpty()) {
-            QByteArray data = proBuffer.dequeue();
-            locker.unlock(); // 处理数据时释放锁
+        // 等待直到有数据或超时
+        m_waitCondition->wait(&m_mutex, 50);
+        
+        // 原子交换缓冲队列
+        proBuffer.swap(localBuffer);
+        
+        if (!localBuffer.isEmpty()) {
+            locker.unlock(); // 处理期间释放锁
             
-            qDebug() << "Processing data in DataProcessorThread:" << data.toHex();
-
-            ProtocolHandler::Command cmd;
-            QByteArray parsedData;
-            if (protocolHandler.parseFrame(data, cmd, parsedData)) {
-                switch (cmd) {
-                    case ProtocolHandler::CMD_SET_SPEED:
+            QElapsedTimer timer;
+            timer.start();
+            
+            // 批量处理数据
+            while (!localBuffer.isEmpty()) {
+                QByteArray data = localBuffer.dequeue();
+                
+                ProtocolHandler::Command cmd;
+                QByteArray parsedData;
+                if (protocolHandler.parseFrame(data, cmd, parsedData)) {
+                    // 命令处理逻辑
+                    switch (cmd) {
+                   case ProtocolHandler::CMD_SET_SPEED:
                         qDebug() << "Command: Set Speed";
                         break;
                     case ProtocolHandler::CMD_DISABLE_MOTOR:
@@ -66,13 +79,21 @@ void DataProcessorThread::run() {
                         break;
                     default:
                         qDebug() << "Unknown command 0x" << QString::number(cmd, 16);
-                        break;
+                        break;                    
+                    }
                 }
-            } else {
-                qDebug() << "Failed to deserialize frame:" << data.toHex();
+                
+                // 超时保护（单帧处理不超过10ms）
+                if (timer.elapsed() > 10) break;
             }
             
-            locker.relock(); // 重新加锁继续处理
+            locker.relock(); // 重新加锁
+            
+            // 将未处理完的数据放回队列头部
+            while (!localBuffer.isEmpty()) {
+                proBuffer.prepend(localBuffer.takeLast());
+            }
         }
     }
 }
+

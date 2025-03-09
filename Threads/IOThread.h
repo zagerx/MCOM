@@ -6,7 +6,7 @@
 #include <QByteArray>
 #include <QMutex>
 #include <QQueue>
-
+#include <QWaitCondition>
 class IOThread : public QThread {
     Q_OBJECT
 public:
@@ -22,8 +22,11 @@ protected:
     void run() override;
 
 private:
+    QWaitCondition m_dataCondition;
     QQueue<QByteArray> SendBuffer;  // 发送缓冲区
     QMutex m_mutex;  // 互斥锁
+    QByteArray m_recvBuffer; // 新增接收缓冲区
+    const int MAX_BUFFER_SIZE = 4096; // 4KB缓冲    
 };
 
 #endif // SENDTHREAD_H
