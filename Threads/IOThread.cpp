@@ -30,7 +30,7 @@ void IOThread::sendData(const QByteArray &data) {
     SendBuffer.enqueue(data);
     m_dataCondition.wakeAll(); // 唤醒线程
 }
-void IOThread::RecivRawData(const QByteArray &data) {
+void IOThread::handleReceivedData(const QByteArray &data) {
     QMutexLocker locker(&m_mutex);
     
     // 缓冲区管理
@@ -48,7 +48,7 @@ void IOThread::RecivRawData(const QByteArray &data) {
 
         QByteArray frame = m_recvBuffer.mid(pos, endPos - pos + 2);
         m_recvBuffer.remove(0, endPos + 2); // 移除已处理数据
-        emit dataReadyToReci(frame);
+        emit dataReadyToProcess(frame);
         pos = 0; // 重置查找位置
     }
 }

@@ -19,11 +19,11 @@ public:
     ~MainWindow();
 
 signals:
-    void UIdataReadysig(const QString name, const QByteArray &data);
+    void uiDataReady(const QString name, const QByteArray &data);
 private slots:
     void onConnectButtonClicked();
     void onRadioButtonToggled(bool checked); // 单选按钮回调函数
-    void toggle_led(void);
+    void toggleLed(void);
 private:
     void updateAvailablePorts(); // 更新可用串口号
     void connectVLayout(QVBoxLayout *layout);

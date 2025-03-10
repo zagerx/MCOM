@@ -11,12 +11,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     mSendThread = new IOThread(this); 
     mDataProThread = new DataProcessorThread(this); // 初始化数据处理线程
     //接收数据流  串口-->IOThead-->DPThread-->UI
-    connect(SerialDev,&SerialManager::dataReceived,mSendThread, &IOThread::RecivRawData);
-    connect(mSendThread, &IOThread::dataReadyToReci,mDataProThread, &DataProcessorThread::handleRawData);
-    connect(mDataProThread, &DataProcessorThread::heart_sigle,this, &MainWindow::toggle_led);
+    connect(SerialDev,&SerialManager::dataReceived,mSendThread, &IOThread::handleReceivedData);
+    connect(mSendThread, &IOThread::dataReadyToProcess,mDataProThread, &DataProcessorThread::processRawData);
+    connect(mDataProThread, &DataProcessorThread::heartSignal,this, &MainWindow::toggleLed);
     //发送数据流  UI-->DPThread-->IOThead-->串口
-    connect(this, &MainWindow::UIdataReadysig,mDataProThread, &DataProcessorThread::getUIData);
-    connect(mDataProThread, &DataProcessorThread::ui_dataReady_sigle,mSendThread, &IOThread::sendData);
+    connect(this, &MainWindow::uiDataReady,mDataProThread, &DataProcessorThread::receiveUIData);
+    connect(mDataProThread, &DataProcessorThread::uiDataReadyToSend,mSendThread, &IOThread::sendData);
     connect(mSendThread, &IOThread::dataReadyToSend,SerialDev,&SerialManager::writeData);
 
     // 连接按钮点击事件
@@ -95,10 +95,10 @@ void MainWindow::onRadioButtonToggled(bool checked) {
             if (layout) {
                 if (layout == ui->verticalLayout) {
                     const QByteArray data;
-                    emit UIdataReadysig(radioButton->text(),data);
+                    emit uiDataReady(radioButton->text(),data);
                 } else if (layout == ui->verticalLayout_2) {
                     const QByteArray data;
-                    emit UIdataReadysig(radioButton->text(),data);
+                    emit uiDataReady(radioButton->text(),data);
                 }
             }
         }
@@ -120,6 +120,6 @@ void MainWindow::connectVLayout(QVBoxLayout *layout) {
         }
     }
 }
-void MainWindow::toggle_led() {
+void MainWindow::toggleLed() {
     qDebug()<<"main hear";
 }

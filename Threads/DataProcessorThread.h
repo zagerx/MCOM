@@ -16,13 +16,13 @@ public:
     explicit DataProcessorThread(QObject *parent = nullptr);
     ~DataProcessorThread();
 public slots:
-    void getUIData(const QString name,const QByteArray &data);
-    void handleRawData(const QByteArray &data);
+    void receiveUIData(const QString name,const QByteArray &data);
+    void processRawData(const QByteArray &data);
 protected:
     void run() override;
 signals:
-    void heart_sigle(void);
-    void ui_dataReady_sigle(const QByteArray &data);
+    void heartSignal(void);
+    void uiDataReadyToSend(const QByteArray &data);
 private:
     QMutex m_mutex;
     QWaitCondition* m_waitCondition;

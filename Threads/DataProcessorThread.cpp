@@ -13,7 +13,7 @@ DataProcessorThread::~DataProcessorThread()
     delete m_waitCondition;
 }
 
-void  DataProcessorThread::getUIData(const QString name, const QByteArray &data)
+void  DataProcessorThread::receiveUIData(const QString name, const QByteArray &data)
 {
     if(name == "正常模式")
     {
@@ -26,12 +26,12 @@ void  DataProcessorThread::getUIData(const QString name, const QByteArray &data)
         QByteArray byte_data;
         byte_data = protocolHandler.buildFrame(ProtocolHandler::CMD_SPEED_MODE,data);
         qDebug() << "buildFrame" << byte_data.toHex();
-        emit ui_dataReady_sigle(byte_data);
+        emit uiDataReadyToSend(byte_data);
     }
 }
 
-//handleRawData 槽函数
-void DataProcessorThread::handleRawData(const QByteArray &data) {
+//processRawData 槽函数
+void DataProcessorThread::processRawData(const QByteArray &data) {
     QMutexLocker locker(&m_mutex);
     proBuffer.enqueue(data);
     m_waitCondition->wakeOne(); // 取消注释并激活等待
@@ -75,7 +75,7 @@ void DataProcessorThread::run() {
                         qDebug() << "Command: Speed Mode";
                         break;
                     case ProtocolHandler::CMD_HEARTBEAT:
-                        emit heart_sigle();
+                        emit heartSignal();
                         break;
                     default:
                         qDebug() << "Unknown command 0x" << QString::number(cmd, 16);
