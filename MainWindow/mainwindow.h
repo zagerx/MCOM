@@ -24,6 +24,8 @@ private slots:
     void onConnectButtonClicked();
     void onRadioButtonToggled(bool checked); // 单选按钮回调函数
     void toggleLed(void);
+    void onCheckBoxStateChanged(int state);
+    void onPushButtonClicked(void);
 private:
     void updateAvailablePorts(); // 更新可用串口号
     void connectVLayout(QVBoxLayout *layout);

@@ -28,7 +28,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     // 连接 verticalLayout_3 中的单选按钮
     ui->checkBox->setChecked(true); // 设置为选中状态
     connectVLayout(ui->verticalLayout_3);
-
+    //连接 vertialcalLayout_4 
+    connectVLayout(ui->verticalLayout_4);
     // 初始化时更新可用串口号
     updateAvailablePorts();
     // 启动接收线程
@@ -58,6 +59,11 @@ void MainWindow::updateAvailablePorts() {
         ui->OpBt->setText("打开串口");
     }
 }
+/*==========================================================================================
+ * @brief 
+ * @FuncName     打开串口按钮回调 
+ * @version      0.1
+--------------------------------------------------------------------------------------------*/
 void MainWindow::onConnectButtonClicked() {
     if (SerialDev->isOpen()) {
         // 如果串口已打开，则关闭串口
@@ -85,6 +91,12 @@ void MainWindow::onConnectButtonClicked() {
         }
     }
 }
+/*==========================================================================================
+ * @brief 
+ * @FuncName     单选按钮回调 
+ * @param        checked 
+ * @version      0.1
+--------------------------------------------------------------------------------------------*/
 void MainWindow::onRadioButtonToggled(bool checked) {
     if (checked) {
         // 获取触发信号的 QRadioButton
@@ -108,16 +120,48 @@ void MainWindow::onRadioButtonToggled(bool checked) {
 void MainWindow::connectVLayout(QVBoxLayout *layout) {
     for (int i = 0; i < layout->count(); ++i) {
         QWidget *widget = layout->itemAt(i)->widget();
-        // 同时连接单选按钮和复选框
+
+        // 连接单选按钮
         if (auto radio = qobject_cast<QRadioButton*>(widget)) {
             connect(radio, &QRadioButton::toggled, this, &MainWindow::onRadioButtonToggled);
-        } else if (auto check = qobject_cast<QCheckBox*>(widget)) 
-        {
-            connect(check, &QCheckBox::stateChanged, this, [=](int state){
-                QVBoxLayout *layout = ui->verticalLayout_3;
-                qDebug() << "verticalLayout_3 中的控件被选中:" << check->text() << "状态:" << state;
-            });
         }
+        // 连接复选框
+        else if (auto check = qobject_cast<QCheckBox*>(widget)) {
+            connect(check, &QCheckBox::stateChanged, this, &MainWindow::onCheckBoxStateChanged);
+        }
+        else if (auto button = qobject_cast<QPushButton*>(widget)){
+            connect(button, &QPushButton::clicked, this, &MainWindow::onPushButtonClicked);
+        }
+    }
+}
+void MainWindow::onPushButtonClicked() {
+    // 获取发送信号的按钮
+    QPushButton *button = qobject_cast<QPushButton*>(sender());
+    if (!button) return;
+
+    // 获取按钮所在的布局
+    QWidget *buttonParent = button->parentWidget();
+    if (!buttonParent) return;
+
+    // 获取父控件的布局
+    QLayout *layout = buttonParent->layout();
+    if (!layout) return;
+
+    // 遍历布局中的控件
+    for (int i = 0; i < layout->count(); ++i) {
+        QWidget *widget = layout->itemAt(i)->widget();
+        if (auto lineEdit = qobject_cast<QLineEdit*>(widget)) {
+            // 找到文本框并获取内容
+            QString text = lineEdit->text();
+            qDebug() << "文本框内容:" << text;
+            return;
+        }
+    }
+}
+void MainWindow::onCheckBoxStateChanged(int state) {
+    QCheckBox *check = qobject_cast<QCheckBox*>(sender());
+    if (check) {
+        qDebug() << "verticalLayout_3 中的控件被选中:" << check->text() << "状态:" << state;
     }
 }
 void MainWindow::toggleLed() {
