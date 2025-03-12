@@ -28,7 +28,7 @@ private slots:
     void onPushButtonClicked(void);
 private:
     void updateAvailablePorts(); // 更新可用串口号
-    void connectVLayout(QVBoxLayout *layout);
+    void connectVLayout(QLayout *layout);
     Ui::MainWindow *ui;
     SerialManager *SerialDev;
     DataProcessorThread *mDataProThread; // 数据处理线程

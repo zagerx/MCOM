@@ -30,6 +30,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     connectVLayout(ui->verticalLayout_3);
     //连接 vertialcalLayout_4 
     connectVLayout(ui->verticalLayout_4);
+    //连接 vertialcalLayout_5
+    connectVLayout(ui->verticalLayout_5);
     // 初始化时更新可用串口号
     updateAvailablePorts();
     // 启动接收线程
@@ -117,20 +119,46 @@ void MainWindow::onRadioButtonToggled(bool checked) {
     }
 }
 // 修改 connectVLayout 函数
-void MainWindow::connectVLayout(QVBoxLayout *layout) {
-    for (int i = 0; i < layout->count(); ++i) {
-        QWidget *widget = layout->itemAt(i)->widget();
+void MainWindow::connectVLayout(QLayout *layout) {
+    if (!layout) return; // 检查布局是否为空
 
-        // 连接单选按钮
-        if (auto radio = qobject_cast<QRadioButton*>(widget)) {
-            connect(radio, &QRadioButton::toggled, this, &MainWindow::onRadioButtonToggled);
-        }
-        // 连接复选框
-        else if (auto check = qobject_cast<QCheckBox*>(widget)) {
-            connect(check, &QCheckBox::stateChanged, this, &MainWindow::onCheckBoxStateChanged);
-        }
-        else if (auto button = qobject_cast<QPushButton*>(widget)){
-            connect(button, &QPushButton::clicked, this, &MainWindow::onPushButtonClicked);
+    // 使用队列来模拟递归处理
+    QQueue<QLayout*> layoutQueue;
+    layoutQueue.enqueue(layout);
+
+    while (!layoutQueue.isEmpty()) {
+        QLayout *currentLayout = layoutQueue.dequeue();
+
+        for (int i = 0; i < currentLayout->count(); ++i) {
+            QWidget *widget = nullptr;
+            QLayout *subLayout = nullptr;
+
+            // 获取布局项中的控件或子布局
+            if (currentLayout->itemAt(i)->widget()) {
+                widget = currentLayout->itemAt(i)->widget();
+            } else if (currentLayout->itemAt(i)->layout()) {
+                subLayout = currentLayout->itemAt(i)->layout();
+            }
+
+            // 处理控件
+            if (widget) {
+                // 连接单选按钮
+                if (auto radio = qobject_cast<QRadioButton*>(widget)) {
+                    connect(radio, &QRadioButton::toggled, this, &MainWindow::onRadioButtonToggled);
+                }
+                // 连接复选框
+                else if (auto check = qobject_cast<QCheckBox*>(widget)) {
+                    connect(check, &QCheckBox::stateChanged, this, &MainWindow::onCheckBoxStateChanged);
+                }
+                // 连接按钮
+                else if (auto button = qobject_cast<QPushButton*>(widget)) {
+                    connect(button, &QPushButton::clicked, this, &MainWindow::onPushButtonClicked);
+                }
+            }
+            // 处理子布局
+            else if (subLayout) {
+                layoutQueue.enqueue(subLayout); // 将子布局加入队列
+            }
         }
     }
 }
@@ -138,7 +166,7 @@ void MainWindow::onPushButtonClicked() {
     // 获取发送信号的按钮
     QPushButton *button = qobject_cast<QPushButton*>(sender());
     if (!button) return;
-
+    qDebug()<<button->text();
     // 获取按钮所在的布局
     QWidget *buttonParent = button->parentWidget();
     if (!buttonParent) return;
