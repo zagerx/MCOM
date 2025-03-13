@@ -1,21 +1,25 @@
 #ifndef WAVEFORMWIDGET_H
 #define WAVEFORMWIDGET_H
 
-// #include <QWidget>
-// #include "qcustomplot.h"
+#include <QWidget>
+#include <QVector>
+#include "qcustomplot.h"
 
-// class WaveformWidget : public QCustomPlot {
-//     Q_OBJECT
-// public:
-//     explicit WaveformWidget(QWidget *parent = nullptr);
+class WaveformWidget : public QCustomPlot {
+    Q_OBJECT
+public:
+    explicit WaveformWidget(QWidget *parent = nullptr);
     
-// public slots:
-//     void addDataPoint(double value);
+public slots:
+    void appendData(int channel, float value);
 
-// private:
-//     QTimer *m_refreshTimer;
-//     QVector<double> m_data;
-//     double m_currentX;
-// };
+private slots:
+    void refreshPlot();
+
+private:
+    QVector<float> m_dataBuffer; // 环形缓冲区
+    int m_currentIndex = 0;
+    QTimer* m_refreshTimer = nullptr;
+};
 
 #endif // WAVEFORMWIDGET_H

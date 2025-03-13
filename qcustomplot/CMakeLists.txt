@@ -27,4 +27,5 @@ target_include_directories(qcustomplot
 target_link_libraries(qcustomplot
     PRIVATE
         Qt${QT_VERSION_MAJOR}::Widgets  # 必须链接Qt Widgets模块
+        Qt${QT_VERSION_MAJOR}::PrintSupport  # 添加这一行
 )

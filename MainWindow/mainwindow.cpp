@@ -3,6 +3,7 @@
 #include <QtDebug>
 #include "Threads/IOThread.h"
 #include "Threads/DataProcessorThread.h"
+#include <Widgets/WaveformWidget.h>
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
     
@@ -10,6 +11,21 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     SerialDev = new SerialManager(this);
     mSendThread = new IOThread(this); 
     mDataProThread = new DataProcessorThread(this); // 初始化数据处理线程
+    m_waveform = new WaveformWidget(this);
+    // 替换UI中现有的QCustomPlot控件（假设objectName为"waveformLayout"）
+    if (auto existingPlot = ui->centralwidget->findChild<QWidget*>("waveformLayout")) {
+        // 继承布局属性
+        m_waveform->setGeometry(existingPlot->geometry());
+        m_waveform->setSizePolicy(existingPlot->sizePolicy());
+        
+        // 替换控件
+        if (auto parentLayout = existingPlot->parentWidget()->layout()) {
+            parentLayout->replaceWidget(existingPlot, m_waveform);
+        }
+        existingPlot->deleteLater();
+    }   
+    connect(mDataProThread, &DataProcessorThread::channelDataReady,m_waveform, &WaveformWidget::appendData);
+    
     //接收数据流  串口-->IOThead-->DPThread-->UI
     connect(SerialDev,&SerialManager::dataReceived,mSendThread, &IOThread::handleReceivedData);
     connect(mSendThread, &IOThread::dataReadyToProcess,mDataProThread, &DataProcessorThread::processRawData);

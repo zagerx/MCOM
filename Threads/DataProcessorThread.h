@@ -20,8 +20,10 @@ public slots:
     void processRawData(const QByteArray &data);
 protected:
     void run() override;
+    void processSpeedModeData(const QByteArray& parsedData);
 signals:
     void heartSignal(void);
+    void channelDataReady(int channel, float value);
     void uiDataReadyToSend(const QByteArray &data);
 private:
     QMutex m_mutex;
@@ -29,5 +31,4 @@ private:
     QQueue<QByteArray> proBuffer;
     ProtocolHandler protocolHandler;
 };
-
 #endif // DATAPROCESSORTHREAD_H

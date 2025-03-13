@@ -167,7 +167,7 @@
      <rect>
       <x>580</x>
       <y>40</y>
-      <width>71</width>
+      <width>82</width>
       <height>51</height>
      </rect>
     </property>
@@ -255,9 +255,27 @@
      </item>
     </layout>
    </widget>
+   <widget class="QCustomPlot" name="waveformLayout" native="true">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>250</y>
+      <width>621</width>
+      <height>281</height>
+     </rect>
+    </property>
+   </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QCustomPlot</class>
+   <extends>QWidget</extends>
+   <header location="global">qcustomplot.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

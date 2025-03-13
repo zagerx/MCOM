@@ -9,12 +9,11 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# 查找Qt组件（必须包含SerialPort）
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets SerialPort)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets SerialPort)
+# 查找 Qt6 组件
+find_package(Qt6 COMPONENTS Widgets SerialPort PrintSupport REQUIRED)
 
-# 添加QCustomPlot库（需确保qcustomplot目录存在）
-# add_subdirectory(qcustomplot)
+# 添加 QCustomPlot 库
+add_subdirectory(qcustomplot)
 
 # 按模块组织源文件
 set(CORE_SOURCES
@@ -31,10 +30,10 @@ set(THREADS_SOURCES
     Threads/DataProcessorThread.h
 )
 
-# set(WIDGETS_SOURCES
-#     Widgets/WaveformWidget.cpp
-#     Widgets/WaveformWidget.h
-# )
+set(WIDGETS_SOURCES
+    Widgets/WaveformWidget.cpp
+    Widgets/WaveformWidget.h
+)
 
 set(MAINWINDOW_SOURCES
     MainWindow/mainwindow.cpp
@@ -59,40 +58,25 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/Threads
     ${CMAKE_CURRENT_SOURCE_DIR}/Widgets
     ${CMAKE_CURRENT_SOURCE_DIR}/MainWindow
-    # ${CMAKE_CURRENT_SOURCE_DIR}/qcustomplot
+    ${CMAKE_CURRENT_SOURCE_DIR}/qcustomplot
 )
 
-if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-    qt_add_executable(MotorAssistant
-        MANUAL_FINALIZATION
-        ${PROJECT_SOURCES}
-    )
-else()
-    if(ANDROID)
-        add_library(MotorAssistant SHARED
-            ${PROJECT_SOURCES}
-        )
-    else()
-        add_executable(MotorAssistant
-            ${PROJECT_SOURCES}
-        )
-    endif()
-endif()
+# 添加可执行文件
+qt_add_executable(MotorAssistant
+    MANUAL_FINALIZATION
+    ${PROJECT_SOURCES}
+)
 
-# 链接库（必须包含SerialPort和QCustomPlot）
-target_link_libraries(MotorAssistant PRIVATE 
-    Qt${QT_VERSION_MAJOR}::Widgets
-    Qt${QT_VERSION_MAJOR}::SerialPort
-#    qcustomplot
+# 链接库
+target_link_libraries(MotorAssistant PRIVATE
+    Qt6::Widgets
+    Qt6::PrintSupport
+    Qt6::SerialPort
+    qcustomplot
 )
 
 # 设置目标属性
-if(${QT_VERSION} VERSION_LESS 6.1.0)
-  set(BUNDLE_ID_OPTION MACOSX_BUNDLE_GUI_IDENTIFIER com.example.MotorAssistant)
-endif()
-
 set_target_properties(MotorAssistant PROPERTIES
-    ${BUNDLE_ID_OPTION}
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
     MACOSX_BUNDLE TRUE
@@ -107,6 +91,5 @@ install(TARGETS MotorAssistant
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-if(QT_VERSION_MAJOR EQUAL 6)
-    qt_finalize_executable(MotorAssistant)
-endif()
+# 最终化可执行文件
+qt_finalize_executable(MotorAssistant)

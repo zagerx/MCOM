@@ -6,6 +6,7 @@ DataProcessorThread::DataProcessorThread( QObject *parent)
 {
     // 构造函数
     m_waitCondition = new QWaitCondition();
+     proBuffer.reserve(1000);
 }
 DataProcessorThread::~DataProcessorThread()
 {
@@ -36,64 +37,60 @@ void DataProcessorThread::processRawData(const QByteArray &data) {
     proBuffer.enqueue(data);
     m_waitCondition->wakeOne(); // 取消注释并激活等待
 }
-void DataProcessorThread::run() {
-    QMutexLocker locker(&m_mutex);
-    QQueue<QByteArray> localBuffer;
-    
+void DataProcessorThread::run()
+{
+    QElapsedTimer batchTimer;
+    const int MAX_BATCH_SIZE = 200; // 每批处理200帧
     while (!isInterruptionRequested()) {
-        // 等待直到有数据或超时
-        m_waitCondition->wait(&m_mutex, 50);
+        QVector<QByteArray> processingBatch;
         
-        // 原子交换缓冲队列
-        proBuffer.swap(localBuffer);
-        
-        if (!localBuffer.isEmpty()) {
-            locker.unlock(); // 处理期间释放锁
+        { // 临界区开始
+            QMutexLocker locker(&m_mutex);
+            m_waitCondition->wait(&m_mutex, 50);
             
-            QElapsedTimer timer;
-            timer.start();
+            // 批量转移数据
+            processingBatch.reserve(qMin(proBuffer.size(), MAX_BATCH_SIZE));
+            while (!proBuffer.isEmpty() && processingBatch.size() < MAX_BATCH_SIZE) {
+                processingBatch.append(proBuffer.dequeue());
+            }
+        } // 临界区结束
+        if (!processingBatch.isEmpty()) {
+            batchTimer.start();
             
-            // 批量处理数据
-            while (!localBuffer.isEmpty()) {
-                QByteArray data = localBuffer.dequeue();
-                
+            foreach (const QByteArray &frame, processingBatch) {
                 ProtocolHandler::Command cmd;
                 QByteArray parsedData;
-                if (protocolHandler.parseFrame(data, cmd, parsedData)) {
-                    // 命令处理逻辑
+                if (protocolHandler.parseFrame(frame, cmd, parsedData)) {
                     switch (cmd) {
-                   case ProtocolHandler::CMD_SET_SPEED:
-                        qDebug() << "Command: Set Speed";
-                        break;
-                    case ProtocolHandler::CMD_DISABLE_MOTOR:
-                        qDebug() << "Command: Disable Motor";
-                        break;
-                    case ProtocolHandler::CMD_NORMAL_MODE:
-                        qDebug() << "Command: Normal Mode";
-                        break;
-                    case ProtocolHandler::CMD_SPEED_MODE:  // 修正命令描述
-                        qDebug() << "Command: Speed Mode";
+                    case ProtocolHandler::CMD_SPEED_MODE:
+                        processSpeedModeData(parsedData);
                         break;
                     case ProtocolHandler::CMD_HEARTBEAT:
-                        emit heartSignal();
+                    emit heartSignal();
+                        static unsigned int cnt;
+                        cnt++;
+                        channelDataReady(0, sinf(cnt*0.1f));
                         break;
                     default:
                         qDebug() << "Unknown command 0x" << QString::number(cmd, 16);
-                        break;                    
+                        break; 
                     }
                 }
-                
-                // 超时保护（单帧处理不超过10ms）
-                if (timer.elapsed() > 10) break;
-            }
-            
-            locker.relock(); // 重新加锁
-            
-            // 将未处理完的数据放回队列头部
-            while (!localBuffer.isEmpty()) {
-                proBuffer.prepend(localBuffer.takeLast());
+                if (batchTimer.elapsed() > 15) // 每批处理不超过15ms
+                    break;
             }
         }
     }
 }
 
+// 新增批量数据处理方法
+void DataProcessorThread::processSpeedModeData(const QByteArray& parsedData)
+{
+    const float* floatData = reinterpret_cast<const float*>(parsedData.constData());
+    size_t count = parsedData.size() / sizeof(float);
+    
+    // 仅处理第一个通道数据
+    if(count >= 1) {
+        emit channelDataReady(0, floatData[0]); // 通道索引从0开始
+    }
+}
