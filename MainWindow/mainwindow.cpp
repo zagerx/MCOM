@@ -6,12 +6,15 @@
 #include <Widgets/WaveformWidget.h>
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
+
     // 初始化模块
     SerialDev = new SerialManager(this);
     mSendThread = new IOThread(this); 
     mDataProThread = new DataProcessorThread(this); // 初始化数据处理线程
+
     // 初始化波形窗口
     setupWaveformWindow();
+
     // 接收数据流  串口-->IOThead-->DPThread-->UI
     connect(SerialDev, &SerialManager::dataReceived, mSendThread, &IOThread::handleReceivedData);
     connect(mSendThread, &IOThread::dataReadyToProcess, mDataProThread, &DataProcessorThread::processRawData);
@@ -20,6 +23,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     connect(this, &MainWindow::uiDataReady, mDataProThread, &DataProcessorThread::receiveUIData);
     connect(mDataProThread, &DataProcessorThread::uiDataReadyToSend, mSendThread, &IOThread::sendData);
     connect(mSendThread, &IOThread::dataReadyToSend, SerialDev, &SerialManager::writeData);
+
     // 连接按钮点击事件
     connect(ui->OpBt, &QPushButton::clicked, this, &MainWindow::onConnectButtonClicked);
     // 连接 verticalLayout 中的单选按钮
