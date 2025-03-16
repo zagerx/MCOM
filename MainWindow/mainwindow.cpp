@@ -6,37 +6,22 @@
 #include <Widgets/WaveformWidget.h>
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
-    
     // 初始化模块
     SerialDev = new SerialManager(this);
     mSendThread = new IOThread(this); 
     mDataProThread = new DataProcessorThread(this); // 初始化数据处理线程
-    m_waveform = new WaveformWidget(this);
-    // 替换UI中现有的QCustomPlot控件（假设objectName为"waveformLayout"）
-    if (auto existingPlot = ui->centralwidget->findChild<QWidget*>("waveformLayout")) {
-        // 继承布局属性
-        m_waveform->setGeometry(existingPlot->geometry());
-        m_waveform->setSizePolicy(existingPlot->sizePolicy());
-        
-        // 替换控件
-        if (auto parentLayout = existingPlot->parentWidget()->layout()) {
-            parentLayout->replaceWidget(existingPlot, m_waveform);
-        }
-        existingPlot->deleteLater();
-    }   
-    connect(mDataProThread, &DataProcessorThread::channelDataReady,m_waveform, &WaveformWidget::appendData);
-    
-    //接收数据流  串口-->IOThead-->DPThread-->UI
-    connect(SerialDev,&SerialManager::dataReceived,mSendThread, &IOThread::handleReceivedData);
-    connect(mSendThread, &IOThread::dataReadyToProcess,mDataProThread, &DataProcessorThread::processRawData);
-    connect(mDataProThread, &DataProcessorThread::heartSignal,this, &MainWindow::toggleLed);
-    //发送数据流  UI-->DPThread-->IOThead-->串口
-    connect(this, &MainWindow::uiDataReady,mDataProThread, &DataProcessorThread::receiveUIData);
-    connect(mDataProThread, &DataProcessorThread::uiDataReadyToSend,mSendThread, &IOThread::sendData);
-    connect(mSendThread, &IOThread::dataReadyToSend,SerialDev,&SerialManager::writeData);
-
+    // 初始化波形窗口
+    setupWaveformWindow();
+    // 接收数据流  串口-->IOThead-->DPThread-->UI
+    connect(SerialDev, &SerialManager::dataReceived, mSendThread, &IOThread::handleReceivedData);
+    connect(mSendThread, &IOThread::dataReadyToProcess, mDataProThread, &DataProcessorThread::processRawData);
+    connect(mDataProThread, &DataProcessorThread::heartSignal, this, &MainWindow::toggleLed);
+    // 发送数据流  UI-->DPThread-->IOThead-->串口
+    connect(this, &MainWindow::uiDataReady, mDataProThread, &DataProcessorThread::receiveUIData);
+    connect(mDataProThread, &DataProcessorThread::uiDataReadyToSend, mSendThread, &IOThread::sendData);
+    connect(mSendThread, &IOThread::dataReadyToSend, SerialDev, &SerialManager::writeData);
     // 连接按钮点击事件
-    connect(ui->OpBt, &QPushButton::clicked,this, &MainWindow::onConnectButtonClicked);
+    connect(ui->OpBt, &QPushButton::clicked, this, &MainWindow::onConnectButtonClicked);
     // 连接 verticalLayout 中的单选按钮
     connectVLayout(ui->verticalLayout);
     // 连接 verticalLayout_2 中的单选按钮
@@ -44,9 +29,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     // 连接 verticalLayout_3 中的单选按钮
     ui->checkBox->setChecked(true); // 设置为选中状态
     connectVLayout(ui->verticalLayout_3);
-    //连接 vertialcalLayout_4 
+    // 连接 vertialcalLayout_4 
     connectVLayout(ui->verticalLayout_4);
-    //连接 vertialcalLayout_5
+    // 连接 vertialcalLayout_5
     connectVLayout(ui->verticalLayout_5);
     // 初始化时更新可用串口号
     updateAvailablePorts();
@@ -59,6 +44,14 @@ MainWindow::~MainWindow() {
     mDataProThread->requestInterruption(); // 请求中断线程
     mDataProThread->wait(); // 等待线程结束        
     delete ui;
+}
+
+void MainWindow::setupWaveformWindow() {
+    m_waveformWindow = new WaveformWindow(this);
+    // 连接数据处理线程到波形窗口
+    connect(mDataProThread, &DataProcessorThread::channelDataReady, m_waveformWindow, &WaveformWindow::appendData);
+    // 显示波形窗口
+    m_waveformWindow->show();
 }
 
 void MainWindow::updateAvailablePorts() {

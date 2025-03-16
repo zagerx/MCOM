@@ -38,6 +38,8 @@ set(WIDGETS_SOURCES
 set(MAINWINDOW_SOURCES
     MainWindow/mainwindow.cpp
     MainWindow/mainwindow.h
+    MainWindow/waveformwindow.cpp
+    MainWindow/waveformwindow.h
     MainWindow/mainwindow.ui
 )
 
