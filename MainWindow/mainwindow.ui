@@ -131,8 +131,8 @@
      <rect>
       <x>250</x>
       <y>20</y>
-      <width>71</width>
-      <height>55</height>
+      <width>81</width>
+      <height>51</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -147,6 +147,13 @@
       <widget class="QCheckBox" name="checkBox_2">
        <property name="text">
         <string>M2</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QCheckBox" name="checkBox_6">
+       <property name="text">
+        <string>波形图界面</string>
        </property>
       </widget>
      </item>

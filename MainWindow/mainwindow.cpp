@@ -12,9 +12,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     mSendThread = new IOThread(this); 
     mDataProThread = new DataProcessorThread(this); // 初始化数据处理线程
 
-    // 初始化波形窗口
-    setupWaveformWindow();
-
     // 接收数据流  串口-->IOThead-->DPThread-->UI
     connect(SerialDev, &SerialManager::dataReceived, mSendThread, &IOThread::handleReceivedData);
     connect(mSendThread, &IOThread::dataReadyToProcess, mDataProThread, &DataProcessorThread::processRawData);
@@ -203,6 +200,11 @@ void MainWindow::onCheckBoxStateChanged(int state) {
     QCheckBox *check = qobject_cast<QCheckBox*>(sender());
     if (check) {
         qDebug() << "verticalLayout_3 中的控件被选中:" << check->text() << "状态:" << state;
+        if(check->text() == "波形图界面")
+        {
+            // 初始化波形窗口 TODO
+            setupWaveformWindow();
+        }
     }
 }
 void MainWindow::toggleLed() {

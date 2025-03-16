@@ -69,7 +69,7 @@ void DataProcessorThread::run()
                     emit heartSignal();
                         static unsigned int cnt;
                         cnt++;
-                        channelDataReady(0, sinf(cnt*0.1f));
+                        channelDataReady(cnt%8, sinf(cnt*0.1f));
                         break;
                     default:
                         qDebug() << "Unknown command 0x" << QString::number(cmd, 16);
