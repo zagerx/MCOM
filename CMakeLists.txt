@@ -31,15 +31,15 @@ set(THREADS_SOURCES
 )
 
 set(WIDGETS_SOURCES
-    Widgets/WaveformWidget.cpp
-    Widgets/WaveformWidget.h
+    Waveform/WaveformWidget.cpp
+    Waveform/WaveformWidget.h
+    Waveform/waveformwindow.cpp
+    Waveform/waveformwindow.h
 )
 
 set(MAINWINDOW_SOURCES
     MainWindow/mainwindow.cpp
     MainWindow/mainwindow.h
-    MainWindow/waveformwindow.cpp
-    MainWindow/waveformwindow.h
     MainWindow/mainwindow.ui
 )
 
@@ -58,7 +58,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/Core
     ${CMAKE_CURRENT_SOURCE_DIR}/HardwareManager
     ${CMAKE_CURRENT_SOURCE_DIR}/Threads
-    ${CMAKE_CURRENT_SOURCE_DIR}/Widgets
+    ${CMAKE_CURRENT_SOURCE_DIR}/Waveform
     ${CMAKE_CURRENT_SOURCE_DIR}/MainWindow
     ${CMAKE_CURRENT_SOURCE_DIR}/qcustomplot
 )

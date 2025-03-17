@@ -3,7 +3,7 @@
 #include <QtDebug>
 #include "Threads/IOThread.h"
 #include "Threads/DataProcessorThread.h"
-#include <Widgets/WaveformWidget.h>
+#include <Waveform/WaveformWidget.h>
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
 
