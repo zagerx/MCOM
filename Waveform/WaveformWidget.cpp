@@ -44,8 +44,24 @@ void WaveformWidget::setChannelVisible(int channel, bool visible) {
     if (channel < 0 || channel >= 8) return; // 通道超出范围
     m_channelVisible[channel] = visible;
 }
+// 新增方法，用于停止绘制
+void WaveformWidget::stopPlotting() {
+    m_isPlotting = false;
+}
+void WaveformWidget::startPlotting() {
+    m_isPlotting = true;
+}
 
 void WaveformWidget::refreshPlot() {
+    if (!m_isPlotting) {
+        // 如果停止绘制，只清除图形数据，不进行其他操作
+        for (int i = 0; i < 8; ++i) {
+            graph(i)->data()->clear();
+        }
+        // replot();
+        return;
+    }
+
     for (int i = 0; i < 8; ++i) {
         if (!m_channelVisible[i]) {
             graph(i)->data()->clear();
@@ -83,5 +99,12 @@ void WaveformWidget::refreshPlot() {
     yAxis->setRange(1.0,-1.0);
     xAxis->setRange(0, 500);
     
+    replot();
+}
+void WaveformWidget::clearData() {
+    for (int i = 0; i < 8; ++i) {
+        m_dataBuffers[i].fill(0);
+        m_currentIndices[i] = 0;
+    }
     replot();
 }
